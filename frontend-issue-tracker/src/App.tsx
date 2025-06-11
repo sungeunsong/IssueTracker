@@ -7,6 +7,7 @@ import { IssueDetailsView } from "./components/IssueDetailsView";
 import type { Issue, ResolutionStatus as StatusEnum } from "./types"; // Renamed to avoid conflict
 import { ResolutionStatus, statusDisplayNames } from "./types"; // Keep for enum values, import statusDisplayNames
 import { PlusIcon } from "./components/icons/PlusIcon";
+import { LoginForm } from "./components/LoginForm";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -20,6 +21,12 @@ export type IssueFormData = {
 };
 
 const App: React.FC = () => {
+  const [authToken, setAuthToken] = useState<string | null>(() =>
+    localStorage.getItem('authToken')
+  );
+  const [username, setUsername] = useState<string | null>(() =>
+    localStorage.getItem('username')
+  );
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +42,23 @@ const App: React.FC = () => {
   const [showViewIssueModal, setShowViewIssueModal] = useState(false);
   const [selectedIssueForView, setSelectedIssueForView] =
     useState<Issue | null>(null);
+
+  // Persist auth info
+  useEffect(() => {
+    if (authToken) {
+      localStorage.setItem('authToken', authToken);
+    } else {
+      localStorage.removeItem('authToken');
+    }
+  }, [authToken]);
+
+  useEffect(() => {
+    if (username) {
+      localStorage.setItem('username', username);
+    } else {
+      localStorage.removeItem('username');
+    }
+  }, [username]);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -121,6 +145,16 @@ const App: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, assigneeFilter, issues.length]);
+
+  const handleLogin = useCallback((token: string, user: string) => {
+    setAuthToken(token);
+    setUsername(user);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    setAuthToken(null);
+    setUsername(null);
+  }, []);
 
   const handleAddIssue = useCallback(
     async (formData: IssueFormData) => {
@@ -313,6 +347,10 @@ const App: React.FC = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
+  if (!authToken) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
+
   if (isLoading && issues.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
@@ -330,10 +368,21 @@ const App: React.FC = () => {
       <div className="max-w-screen-xl mx-auto">
         {" "}
         {/* Increased max-width */}
-        <header className="mb-10 text-center">
+        <header className="mb-10 flex flex-col items-center gap-2">
           <h1 className="text-4xl font-extrabold text-slate-800 sm:text-5xl">
             웹 이슈 트래커
           </h1>
+          {username && (
+            <div className="flex items-center gap-4 mt-2">
+              <span className="text-slate-600">{username}님</span>
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
+              >
+                로그아웃
+              </button>
+            </div>
+          )}
         </header>
         {error && (
           <div

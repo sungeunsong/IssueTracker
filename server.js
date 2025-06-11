@@ -12,6 +12,10 @@ const app = express();
 const port = process.env.PORT || 3000;
 const ISSUES_FILE_PATH = path.join(__dirname, 'issues.json');
 
+// Simple credentials for demonstration login
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password';
+
 // 초기 이슈 상태 (types.ts의 ResolutionStatus.OPEN에 해당)
 const INITIAL_ISSUE_STATUS = "OPEN";
 
@@ -54,6 +58,16 @@ async function writeIssuesToFile(issues) {
 }
 
 app.use(express.json()); // JSON 요청 본문 파싱을 위한 미들웨어
+
+// Simple login endpoint for demonstration
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    // In a real application you'd issue a real token here
+    return res.json({ token: 'mock-token', username });
+  }
+  return res.status(401).json({ message: 'Invalid credentials' });
+});
 
 // API Routes
 // GET all issues
